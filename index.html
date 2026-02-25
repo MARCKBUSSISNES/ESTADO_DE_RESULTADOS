@@ -283,6 +283,15 @@
       <div>
         <h1>Módulo Financiero Ultra Premium</h1>
         <div class="sub" id="subTitle">Carga tu backup JSON para ver Estado de Resultados, clientes, productos, gráficas y exportación a Excel.</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+        <div style="width:34px;height:34px;border-radius:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.10);display:grid;place-items:center;overflow:hidden;">
+          <img src="LOGO2.png" alt="LOGO2" style="width:30px;height:30px;object-fit:contain;opacity:.95"/>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,.70)">
+          Servicio a: <span style="color:rgba(255,255,255,.92);font-weight:800">MTR ATLANTIC PLAZA</span>
+        </div>
+      </div>
+
       </div>
     </div>
 
@@ -1024,8 +1033,44 @@ function exportExcel(){
   })));
   XLSX.utils.book_append_sheet(wb, ws4, "DetalleVentas");
 
-  XLSX.writeFile(wb, "MODULO_FINANCIERO_MTR.xlsx");
+  XLSX.writeFile(wb, "MODULO_FINANCIERO_MARCK_BUSINESS.xlsx");
 }
 </script>
+
+<script>
+// Fallback sencillo para LOGO2 (si no existe LOGO2.png, intenta LOGO2.jpg / LOGO2.jpeg)
+(function(){
+  const imgs = Array.from(document.images).filter(im => (im.getAttribute("src")||"").includes("LOGO2.png"));
+  imgs.forEach(im=>{
+    im.addEventListener("error", ()=>{
+      const tried = im.dataset.tried || "";
+      if(!tried){
+        im.dataset.tried="jpg";
+        im.src="LOGO2.jpg";
+      }else if(tried==="jpg"){
+        im.dataset.tried="jpeg";
+        im.src="LOGO2.jpeg";
+      }
+    });
+  });
+})();
+</script>
+
+
+<footer style="max-width:1200px;margin:0 auto 26px;padding:0 16px;">
+  <div style="margin-top:10px;padding:14px 16px;border-radius:18px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.18);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img src="LOGO1.png" alt="LOGO1" style="width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 8px 18px rgba(0,0,0,.45));"/>
+      <div>
+        <div style="font-weight:900;letter-spacing:.2px">Marck Business</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.65)">Business Intelligence • Reportes & Control</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:rgba(255,255,255,.65)">
+      © 2026 Marck Business. Todos los derechos reservados.
+    </div>
+  </div>
+</footer>
+
 </body>
 </html>
