@@ -1,0 +1,1031 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Módulo Financiero Ultra Premium - Marck Business</title>
+
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+  :root{
+    /* Colores del logo (azul + naranja) */
+    --blue:#5572fc;
+    --orange:#fa9435;
+    --bg0:#070b14;
+    --bg1:#0b1222;
+    --panel:rgba(255,255,255,.06);
+    --panel2:rgba(255,255,255,.04);
+    --line:rgba(255,255,255,.10);
+    --text:rgba(255,255,255,.92);
+    --muted:rgba(255,255,255,.65);
+    --good:#00ff9d;
+    --bad:#ff4d6d;
+    --shadow: 0 18px 55px rgba(0,0,0,.55);
+    --r:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    color:var(--text);
+    background:
+      radial-gradient(1100px 600px at 15% -10%, rgba(85,114,252,.35), transparent 60%),
+      radial-gradient(900px 520px at 95% 0%, rgba(250,148,53,.30), transparent 55%),
+      radial-gradient(900px 700px at 50% 115%, rgba(85,114,252,.18), transparent 55%),
+      linear-gradient(180deg, var(--bg0), var(--bg1));
+    overflow-x:hidden;
+  }
+
+  /* subtle animated grain */
+  .grain{
+    pointer-events:none;
+    position:fixed; inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+    mix-blend-mode:overlay;
+    opacity:.18;
+    animation: grainMove 10s steps(2) infinite;
+  }
+  @keyframes grainMove{
+    0%{transform:translate3d(0,0,0)}
+    25%{transform:translate3d(-2%,1%,0)}
+    50%{transform:translate3d(1%,-2%,0)}
+    75%{transform:translate3d(2%,2%,0)}
+    100%{transform:translate3d(0,0,0)}
+  }
+
+  header{
+    position:sticky; top:0; z-index:20;
+    backdrop-filter: blur(14px);
+    background: linear-gradient(90deg, rgba(85,114,252,.10), rgba(250,148,53,.08));
+    border-bottom:1px solid var(--line);
+  }
+  .topbar{
+    max-width:1200px;
+    margin:0 auto;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:12px;
+    min-width: 260px;
+  }
+  .brand .logoWrap{
+    width:120px; height:120px; border-radius:14px;
+    background: linear-gradient(135deg, rgba(85,114,252,.18), rgba(250,148,53,.18));
+    border:1px solid rgba(255,255,255,.10);
+    display:grid; place-items:center;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    overflow:hidden;
+  }
+  .brand img{
+    width:110px; height:110px; object-fit:contain;
+    filter: drop-shadow(0 8px 18px rgba(0,0,0,.45));
+  }
+  .brand h1{
+    margin:0;
+    font-size:15px;
+    letter-spacing:.3px;
+    font-weight:700;
+    line-height:1.1;
+  }
+  .brand .sub{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:2px;
+  }
+
+  .actions{display:flex; flex-wrap:wrap; align-items:center; gap:10px; justify-content:flex-end}
+  .chip{
+    display:flex; align-items:center; gap:8px;
+    padding:10px 12px;
+    border-radius:999px;
+    background:var(--panel);
+    border:1px solid rgba(255,255,255,.10);
+  }
+  .chip label{font-size:12px;color:var(--muted)}
+  .chip input[type="date"]{
+    background:transparent; color:var(--text);
+    border:none; outline:none;
+    font-size:12px;
+  }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:11px 14px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.12);
+    background: linear-gradient(135deg, rgba(85,114,252,.18), rgba(250,148,53,.14));
+    color:var(--text);
+    cursor:pointer;
+    font-weight:700;
+    transition: transform .12s ease, filter .12s ease, border-color .12s ease;
+    user-select:none;
+  }
+  .btn:hover{transform: translateY(-1px); filter:brightness(1.06); border-color: rgba(255,255,255,.22)}
+  .btn:active{transform: translateY(0px) scale(.99)}
+  .btn.secondary{background:var(--panel); font-weight:650}
+  .btn.danger{background: linear-gradient(135deg, rgba(255,77,109,.22), rgba(250,148,53,.10))}
+
+  .wrap{max-width:1200px;margin:18px auto 60px; padding:0 16px;}
+  .grid{
+    display:grid;
+    grid-template-columns: 1.2fr .8fr;
+    gap:16px;
+  }
+  @media (max-width: 980px){ .grid{grid-template-columns:1fr} .brand{min-width:auto} }
+
+  .card{
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.035));
+    border:1px solid rgba(255,255,255,.10);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+    transform: translateY(8px);
+    opacity:0;
+    animation: in .45s ease forwards;
+  }
+  @keyframes in{to{transform:translateY(0);opacity:1}}
+
+  .cardHead{
+    padding:14px 14px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    border-bottom:1px solid var(--line);
+    background: rgba(0,0,0,.18);
+  }
+  .cardTitle{font-weight:800; letter-spacing:.2px}
+  .cardSub{font-size:12px;color:var(--muted)}
+  .cardBody{padding:14px}
+
+  .uploadRow{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  }
+  .file{
+    position:relative;
+    display:inline-flex; align-items:center; gap:10px;
+    padding:11px 14px;
+    border-radius:14px;
+    border:1px dashed rgba(255,255,255,.22);
+    background: rgba(0,0,0,.18);
+  }
+  .file input{max-width:260px}
+  .note{font-size:12px;color:var(--muted); line-height:1.25}
+  .badge{
+    padding:4px 8px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.22);
+    font-size:11px; color:var(--muted);
+  }
+
+  .kpis{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:12px;
+  }
+  @media (max-width: 720px){ .kpis{grid-template-columns:1fr} }
+  .kpi{
+    background: rgba(0,0,0,.20);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius: 16px;
+    padding:12px;
+    position:relative;
+    overflow:hidden;
+  }
+  .kpi:before{
+    content:"";
+    position:absolute; inset:-40px;
+    background: radial-gradient(circle at 30% 20%, rgba(85,114,252,.18), transparent 60%),
+                radial-gradient(circle at 80% 30%, rgba(250,148,53,.14), transparent 60%);
+    filter: blur(8px);
+    opacity:.9;
+  }
+  .kpi > *{position:relative}
+  .kpi .label{font-size:12px;color:var(--muted)}
+  .kpi .val{margin-top:4px;font-size:22px;font-weight:900;letter-spacing:.2px}
+  .kpi .small{margin-top:6px;font-size:12px;color:var(--muted)}
+  .good{color:var(--good)}
+  .bad{color:var(--bad)}
+
+  .tabs{
+    display:flex; gap:8px; flex-wrap:wrap;
+  }
+  .tab{
+    padding:9px 12px;
+    border-radius: 999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.16);
+    font-weight:800;
+    font-size:12px;
+    cursor:pointer;
+    transition:.12s ease;
+  }
+  .tab.active{
+    background: linear-gradient(135deg, rgba(85,114,252,.22), rgba(250,148,53,.18));
+    border-color: rgba(255,255,255,.20);
+  }
+
+  .panel{display:none}
+  .panel.active{display:block; animation: fade .22s ease}
+  @keyframes fade{from{opacity:.5; transform: translateY(3px)} to{opacity:1; transform: translateY(0)}}
+
+  .row2{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:12px;
+  }
+  @media (max-width: 920px){ .row2{grid-template-columns:1fr} }
+
+  .tableWrap{
+    overflow:auto;
+    border-radius: 14px;
+    border:1px solid rgba(255,255,255,.10);
+    background: rgba(0,0,0,.18);
+  }
+  table{width:100%; border-collapse:collapse; min-width:720px}
+  th,td{padding:10px 10px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left}
+  th{font-size:12px; color:var(--muted); background: rgba(255,255,255,.03); position:sticky; top:0}
+  td{font-size:13px}
+  .right{text-align:right}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+  .pill{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.20);
+    font-size:12px;
+  }
+  .pill.blue{border-color:rgba(85,114,252,.35); color:#cfd6ff}
+  .pill.orange{border-color:rgba(250,148,53,.35); color:#ffe0c2}
+
+  .footer{
+    margin-top:14px;
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.35;
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logoWrap">
+        <img id="logoImg" src="LOGO1.png" alt="LOGO1" onerror="this.style.opacity=.15"/>
+      </div>
+      <div>
+        <h1>Módulo Financiero Ultra Premium</h1>
+        <div class="sub" id="subTitle">Carga tu backup JSON para ver Estado de Resultados, clientes, productos, gráficas y exportación a Excel.</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="chip">
+        <label>Desde</label>
+        <input type="date" id="fromDate">
+      </div>
+      <div class="chip">
+        <label>Hasta</label>
+        <input type="date" id="toDate">
+      </div>
+      <button class="btn secondary" id="btnApply">Aplicar filtro</button>
+      <button class="btn" id="btnExcel">Exportar Excel</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+    <section class="card">
+      <div class="cardHead">
+        <div>
+          <div class="cardTitle">Cargar backup</div>
+          <div class="cardSub">Compatible con el backup del POS (clients / products / sales / shipments / closes...).</div>
+        </div>
+        <span class="badge" id="statusBadge">Sin archivo</span>
+      </div>
+      <div class="cardBody">
+        <div class="uploadRow">
+          <div class="file">
+            <span class="pill blue">JSON</span>
+            <input id="jsonFile" type="file" accept=".json,application/json">
+          </div>
+          
+          <button class="btn danger" id="btnReset">Limpiar</button>
+        </div>
+        <div class="footer" id="fileInfo">
+          Tip: tu backup trae las ventas con campos como <span class="mono">ts</span>, <span class="mono">dateKey</span>, <span class="mono">saleType</span> y <span class="mono">payMethod</span>. Este módulo usa <span class="mono">ts</span> (timestamp real) para evitar que “ventas de hoy” desaparezcan por filtros mal interpretados.
+        </div>
+      </div>
+    </section>
+
+    <aside class="card">
+      <div class="cardHead">
+        <div>
+          <div class="cardTitle">KPIs Ejecutivos</div>
+          <div class="cardSub">Ventas vs Costos vs Utilidad + margen, ticket promedio, ROI.</div>
+        </div>
+      </div>
+      <div class="cardBody">
+        <div class="kpis">
+          <div class="kpi"><div class="label">Ventas</div><div class="val" id="kSales">Q0.00</div><div class="small" id="kSalesN">0 ventas</div></div>
+          <div class="kpi"><div class="label">Costos</div><div class="val" id="kCosts">Q0.00</div><div class="small">Inversión estimada</div></div>
+          <div class="kpi"><div class="label">Utilidad</div><div class="val" id="kProfit">Q0.00</div><div class="small" id="kMargin">Margen 0%</div></div>
+          <div class="kpi"><div class="label">Ticket promedio</div><div class="val" id="kAvg">Q0.00</div><div class="small">Promedio por venta</div></div>
+          <div class="kpi"><div class="label">ROI</div><div class="val" id="kRoi">0%</div><div class="small">Utilidad / Costos</div></div>
+          <div class="kpi"><div class="label">Envíos</div><div class="val" id="kShip">0</div><div class="small" id="kShipMoney">Q0.00 en ventas</div></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <section class="card" style="margin-top:16px">
+    <div class="cardHead">
+      <div>
+        <div class="cardTitle">Panel Financiero</div>
+        <div class="cardSub">Gráficas, ventas por producto, ventas por cliente, métodos de pago y detalle completo.</div>
+      </div>
+      <div class="tabs" role="tablist" aria-label="Secciones">
+        <div class="tab active" data-tab="dash">Dashboard</div>
+        <div class="tab" data-tab="prod">Productos</div>
+        <div class="tab" data-tab="cli">Clientes</div>
+        <div class="tab" data-tab="det">Detalle</div>
+      </div>
+    </div>
+
+    <div class="cardBody">
+      <!-- DASH -->
+      <div class="panel active" id="panel-dash">
+        <div class="row2">
+          <div class="card" style="box-shadow:none; background:rgba(0,0,0,.18); border-color:rgba(255,255,255,.10)">
+            <div class="cardHead" style="background:transparent">
+              <div>
+                <div class="cardTitle">Ventas / Costos / Utilidad</div>
+                <div class="cardSub">Estado de resultados del rango filtrado</div>
+              </div>
+            </div>
+            <div class="cardBody"><canvas id="chMain" height="140"></canvas></div>
+          </div>
+
+          <div class="card" style="box-shadow:none; background:rgba(0,0,0,.18); border-color:rgba(255,255,255,.10)">
+            <div class="cardHead" style="background:transparent">
+              <div>
+                <div class="cardTitle">Ventas por forma de pago</div>
+                <div class="cardSub">Distribución para cuadrar caja</div>
+              </div>
+            </div>
+            <div class="cardBody"><canvas id="chPay" height="140"></canvas></div>
+          </div>
+        </div>
+
+        <div class="row2" style="margin-top:12px">
+          <div class="card" style="box-shadow:none; background:rgba(0,0,0,.18); border-color:rgba(255,255,255,.10)">
+            <div class="cardHead" style="background:transparent">
+              <div>
+                <div class="cardTitle">Evolución diaria</div>
+                <div class="cardSub">Ventas y utilidad por día (con tu timestamp real)</div>
+              </div>
+            </div>
+            <div class="cardBody"><canvas id="chDaily" height="140"></canvas></div>
+          </div>
+
+          <div class="card" style="box-shadow:none; background:rgba(0,0,0,.18); border-color:rgba(255,255,255,.10)">
+            <div class="cardHead" style="background:transparent">
+              <div>
+                <div class="cardTitle">Top productos por utilidad</div>
+                <div class="cardSub">Los que más dejan ganancia</div>
+              </div>
+            </div>
+            <div class="cardBody"><canvas id="chTop" height="140"></canvas></div>
+          </div>
+        </div>
+
+        <div class="footer" id="costNote"></div>
+      </div>
+
+      <!-- PRODUCTOS -->
+      <div class="panel" id="panel-prod">
+        <div class="tableWrap">
+          <table id="tblProd">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th class="right">Unidades</th>
+                <th class="right">Ventas</th>
+                <th class="right">Costos</th>
+                <th class="right">Utilidad</th>
+                <th class="right">Margen</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CLIENTES -->
+      <div class="panel" id="panel-cli">
+        <div class="tableWrap">
+          <table id="tblCli">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Teléfono</th>
+                <th class="right">Ventas</th>
+                <th class="right">Costos</th>
+                <th class="right">Utilidad</th>
+                <th class="right">Tickets</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DETALLE -->
+      <div class="panel" id="panel-det">
+        <div class="tableWrap">
+          <table id="tblDet">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Pago</th>
+                <th>Cliente</th>
+                <th class="right">Subtotal</th>
+                <th class="right">Desc</th>
+                <th class="right">Total</th>
+                <th class="right">Costo</th>
+                <th class="right">Utilidad</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<script>
+/* =====================
+   Utilidades
+===================== */
+const $ = (id)=>document.getElementById(id);
+const money = (n)=>"Q"+(Number(n||0).toFixed(2));
+const clamp2 = (n)=>Number((Number(n||0)).toFixed(2));
+const ymd = (ts)=>{
+  const d=new Date(Number(ts||0));
+  if(!isFinite(d.getTime())) return "";
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,"0");
+  const da=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${da}`;
+}
+const niceDT = (ts)=>{
+  const d=new Date(Number(ts||0));
+  if(!isFinite(d.getTime())) return "";
+  return d.toLocaleString("es-GT", {year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+}
+
+/* =====================
+   Estado
+===================== */
+let RAW=null;          // backup completo
+let SALES=[];          // ventas normalizadas
+let PRODUCTS=[];       // productos
+let CLIENTS=[];        // clientes
+let CHARTS={};         // instancias chart.js
+let LAST_RESULT=null;  // para excel
+
+function destroyChart(key){
+  try{ if(CHARTS[key]){ CHARTS[key].destroy(); CHARTS[key]=null; } }catch(e){}
+}
+
+/* =====================
+   Logo
+===================== */
+/* =====================
+   Tabs
+===================== */
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    const name=t.dataset.tab;
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    $("panel-"+name).classList.add("active");
+  });
+});
+
+/* =====================
+   Carga JSON
+===================== */
+$("jsonFile").addEventListener("change", async (e)=>{
+  const f=e.target.files?.[0];
+  if(!f) return;
+  const txt = await f.text();
+  try{
+    RAW = JSON.parse(txt);
+  }catch(err){
+    alert("JSON inválido. No se pudo leer.");
+    console.error(err);
+    return;
+  }
+  normalizeBackup(RAW);
+  initDateRange();
+  applyFilterAndRender();
+});
+
+$("btnApply").addEventListener("click", ()=>applyFilterAndRender());
+$("btnExcel").addEventListener("click", ()=>exportExcel());
+$("btnReset").addEventListener("click", ()=>resetAll());
+
+function resetAll(){
+  RAW=null; SALES=[]; PRODUCTS=[]; CLIENTS=[]; LAST_RESULT=null;
+  $("jsonFile").value="";
+  $("fromDate").value="";
+  $("toDate").value="";
+  $("statusBadge").textContent="Sin archivo";
+  $("fileInfo").innerHTML = "Listo. Carga tu backup JSON.";
+  setKPIs({});
+  ["main","pay","daily","top"].forEach(k=>destroyChart(k));
+  ["tblProd","tblCli","tblDet"].forEach(id=>{
+    const tb = $(id).querySelector("tbody");
+    if(tb) tb.innerHTML="";
+  });
+}
+
+function normalizeBackup(b){
+  const exportedAt = b?.exportedAt || "";
+  const shop = b?.settings?.shopName || "Marck Business";
+  $("subTitle").textContent = `${shop} • Dashboard ejecutivo y análisis financiero`;
+  $("statusBadge").textContent = "Backup cargado ✅";
+
+  // Estructura del backup del POS: clients/products/sales/shipments/closes...
+  CLIENTS = Array.isArray(b.clients) ? b.clients : [];
+  PRODUCTS = Array.isArray(b.products) ? b.products : [];
+  const rawSales = Array.isArray(b.sales) ? b.sales : [];
+
+  // Normalizamos ventas (usando ts como fuente real)
+  SALES = rawSales.map(s=>{
+    const ts = Number(s.ts ?? s.date ?? s.paidAt ?? 0); // robusto
+    const clientName = s.client ? `${(s.client.names||"").trim()} ${(s.client.last||"").trim()}`.trim() : "MOSTRADOR";
+    const clientPhone = s.client?.phone || "";
+    const items = Array.isArray(s.items) ? s.items : [];
+    const subtotal = Number(s.subtotal ?? 0);
+    const disc = Number(s.discountAmount ?? 0);
+    const total = Number(s.total ?? Math.max(subtotal-disc,0));
+
+    return {
+      id: s.id || "",
+      ts,
+      dateKey: s.dateKey || ymd(ts),
+      saleType: s.saleType || "MOSTRADOR",
+      payMethod: s.payMethod || "EFECTIVO",
+      clientName,
+      clientPhone,
+      subtotal, disc, total,
+      items,
+      receiptNo: s.receiptNo || "",
+      source: s.source || ""
+    }
+  }).filter(x=>isFinite(x.ts) && x.ts>0);
+
+  $("fileInfo").innerHTML = `Archivo: <span class="mono">${exportedAt || "sin exportedAt"}</span> • Ventas: <b>${SALES.length}</b> • Productos: <b>${PRODUCTS.length}</b> • Clientes: <b>${CLIENTS.length}</b>`;
+}
+
+function initDateRange(){
+  if(!SALES.length){
+    $("fromDate").value="";
+    $("toDate").value="";
+    return;
+  }
+  const minTs = Math.min(...SALES.map(x=>x.ts));
+  const maxTs = Math.max(...SALES.map(x=>x.ts));
+  $("fromDate").value = ymd(minTs);
+  $("toDate").value = ymd(maxTs);
+}
+
+/* =====================
+   Cálculos
+===================== */
+function getCostForItem(it){
+  // 1) si ya existe costAtSale en la venta, usamos eso.
+  const c1 = Number(it.costAtSale);
+  if(isFinite(c1) && c1>=0) return c1;
+
+  // 2) buscar por code primero
+  const code = (it.code||"").toString();
+  if(code){
+    const p = PRODUCTS.find(p=>String(p.code||"")===code);
+    const pc = Number(p?.cost);
+    if(isFinite(pc) && pc>=0) return pc;
+  }
+
+  // 3) fallback por nameKey / name
+  const name = (it.name||"").toString().trim().toLowerCase();
+  if(name){
+    const p = PRODUCTS.find(p=>(p.nameKey||p.name||"").toString().trim().toLowerCase()===name);
+    const pc = Number(p?.cost);
+    if(isFinite(pc) && pc>=0) return pc;
+  }
+  return 0;
+}
+
+function applyFilterAndRender(){
+  if(!SALES.length){
+    alert("Carga un backup JSON primero.");
+    return;
+  }
+  const from = $("fromDate").value ? new Date($("fromDate").value+"T00:00:00").getTime() : -Infinity;
+  const to   = $("toDate").value ? new Date($("toDate").value+"T23:59:59").getTime() : Infinity;
+
+  const filt = SALES.filter(s=>s.ts>=from && s.ts<=to);
+  const result = computeAll(filt);
+  LAST_RESULT = result;
+
+  setKPIs(result.kpis);
+  renderCharts(result);
+  renderTables(result);
+}
+
+function computeAll(sales){
+  let salesSum=0, costSum=0, shipCount=0, shipMoney=0;
+  const payAgg = {};      // payMethod -> total
+  const dayAgg = {};      // ymd -> {sales,cost,profit}
+  const prodAgg = {};     // product -> {qty,sales,cost,profit}
+  const cliAgg = {};      // phone/name -> {name, phone, sales, cost, profit, tickets}
+  const detail = [];      // rows
+
+  for(const s of sales){
+    salesSum += Number(s.total||0);
+    if(s.saleType==="ENVIO") { shipCount++; shipMoney += Number(s.total||0); }
+
+    payAgg[s.payMethod] = (payAgg[s.payMethod]||0) + Number(s.total||0);
+
+    let saleCost=0;
+    let saleItemsSales=0;
+
+    for(const it of (s.items||[])){
+      const qty = Number(it.qty||0);
+      const price = Number(it.price||0);
+      const lineSales = price*qty;
+      const unitCost = getCostForItem(it);
+      const lineCost = unitCost*qty;
+      const lineProfit = lineSales - lineCost;
+
+      saleCost += lineCost;
+      saleItemsSales += lineSales;
+
+      const key = (it.name||"").toString().trim() || (it.code||"").toString().trim() || "SIN NOMBRE";
+      if(!prodAgg[key]) prodAgg[key]={name:key, qty:0, sales:0, cost:0, profit:0};
+      prodAgg[key].qty += qty;
+      prodAgg[key].sales += lineSales;
+      prodAgg[key].cost += lineCost;
+      prodAgg[key].profit += lineProfit;
+    }
+
+    costSum += saleCost;
+
+    const dkey = ymd(s.ts);
+    if(!dayAgg[dkey]) dayAgg[dkey] = {day:dkey, sales:0, cost:0, profit:0};
+    dayAgg[dkey].sales += Number(s.total||0);
+    dayAgg[dkey].cost += saleCost;
+    dayAgg[dkey].profit += (Number(s.total||0) - saleCost);
+
+    const cKey = (s.clientPhone||"") ? ("P:"+s.clientPhone) : ("N:"+s.clientName);
+    if(!cliAgg[cKey]) cliAgg[cKey]={name:s.clientName||"MOSTRADOR", phone:s.clientPhone||"", sales:0, cost:0, profit:0, tickets:0};
+    cliAgg[cKey].sales += Number(s.total||0);
+    cliAgg[cKey].cost += saleCost;
+    cliAgg[cKey].profit += (Number(s.total||0) - saleCost);
+    cliAgg[cKey].tickets += 1;
+
+    detail.push({
+      ts:s.ts, date:niceDT(s.ts),
+      type:s.saleType, pay:s.payMethod,
+      client:s.clientName, phone:s.clientPhone,
+      subtotal: clamp2(s.subtotal),
+      disc: clamp2(s.disc),
+      total: clamp2(s.total),
+      cost: clamp2(saleCost),
+      profit: clamp2(Number(s.total||0) - saleCost),
+      receiptNo: s.receiptNo || "",
+      source: s.source || ""
+    });
+  }
+
+  // KPIs
+  const profitSum = salesSum - costSum;
+  const margin = salesSum ? (profitSum/salesSum)*100 : 0;
+  const avgTicket = sales.length ? salesSum/sales.length : 0;
+  const roi = costSum ? (profitSum/costSum)*100 : 0;
+
+  const kpis = {
+    sales: salesSum,
+    costs: costSum,
+    profit: profitSum,
+    margin,
+    avgTicket,
+    roi,
+    shipCount,
+    shipMoney,
+    n: sales.length
+  }
+
+  const prods = Object.values(prodAgg).map(x=>({
+    ...x,
+    margin: x.sales ? (x.profit/x.sales)*100 : 0
+  })).sort((a,b)=>b.profit-a.profit);
+
+  const clients = Object.values(cliAgg).sort((a,b)=>b.sales-a.sales);
+
+  const days = Object.values(dayAgg).sort((a,b)=>a.day.localeCompare(b.day));
+
+  const pay = Object.entries(payAgg).map(([k,v])=>({method:k, total:v})).sort((a,b)=>b.total-a.total);
+
+  // Nota costos
+  const usesHistorical = sales.some(s=> (s.items||[]).some(it=> it.costAtSale!=null ));
+  $("costNote").innerHTML = usesHistorical
+    ? `✅ Tus ventas incluyen <span class="mono">costAtSale</span> en algunos items: la utilidad se calcula con el costo histórico real.`
+    : `ℹ️ En este backup, los items no traen <span class="mono">costAtSale</span>. El módulo estima costos usando el costo actual del producto (<span class="mono">products[].cost</span>). Si cambias costos con el tiempo, lo ideal es guardar el costo dentro de cada venta.`;
+
+  return {kpis, prods, clients, days, pay, detail};
+}
+
+/* =====================
+   Render KPIs
+===================== */
+function setKPIs(k){
+  const sales = Number(k.sales||0), costs = Number(k.costs||0), profit = Number(k.profit||0);
+  $("kSales").textContent = money(sales);
+  $("kCosts").textContent = money(costs);
+  $("kProfit").textContent = money(profit);
+  $("kProfit").className = "val " + (profit>=0 ? "good":"bad");
+  $("kSalesN").textContent = `${Number(k.n||0)} ventas`;
+  $("kMargin").textContent = `Margen ${Number(k.margin||0).toFixed(2)}%`;
+  $("kAvg").textContent = money(k.avgTicket||0);
+  $("kRoi").textContent = `${Number(k.roi||0).toFixed(2)}%`;
+  $("kShip").textContent = String(Number(k.shipCount||0));
+  $("kShipMoney").textContent = `${money(k.shipMoney||0)} en ventas`;
+}
+
+/* =====================
+   Charts (sin forzar colores, usamos defaults + gradients de tu marca)
+===================== */
+function makeGradient(ctx, a, b){
+  const g=ctx.createLinearGradient(0,0,400,0);
+  g.addColorStop(0,a); g.addColorStop(1,b);
+  return g;
+}
+
+function renderCharts(res){
+  // MAIN
+  destroyChart("main");
+  {
+    const ctx = $("chMain").getContext("2d");
+    const g1 = makeGradient(ctx, "rgba(85,114,252,.9)", "rgba(250,148,53,.8)");
+    CHARTS.main = new Chart(ctx,{
+      type:"bar",
+      data:{
+        labels:["Ventas","Costos","Utilidad"],
+        datasets:[{
+          data:[clamp2(res.kpis.sales), clamp2(res.kpis.costs), clamp2(res.kpis.profit)],
+          backgroundColor:[g1, "rgba(255,77,109,.55)", "rgba(0,255,157,.55)"],
+          borderColor:["rgba(255,255,255,.15)","rgba(255,255,255,.15)","rgba(255,255,255,.15)"],
+          borderWidth:1,
+          borderRadius:12
+        }]
+      },
+      options:{
+        plugins:{legend:{display:false}},
+        scales:{ y:{ticks:{color:"rgba(255,255,255,.75)"}, grid:{color:"rgba(255,255,255,.08)"}}, x:{ticks:{color:"rgba(255,255,255,.75)"}, grid:{display:false}}}
+      }
+    });
+  }
+
+  // PAY
+  destroyChart("pay");
+  {
+    const ctx = $("chPay").getContext("2d");
+    const labels = res.pay.map(x=>x.method);
+    const data = res.pay.map(x=>clamp2(x.total));
+    CHARTS.pay = new Chart(ctx,{
+      type:"doughnut",
+      data:{
+        labels,
+        datasets:[{
+          data,
+          backgroundColor:[
+            "rgba(85,114,252,0.9)",
+            "rgba(250,148,53,0.9)",
+            "rgba(0,255,157,0.9)",
+            "rgba(255,77,109,0.9)",
+            "rgba(180,180,255,0.9)",
+            "rgba(255,200,120,0.9)"
+          ],
+          borderColor:"rgba(255,255,255,.15)",
+          borderWidth:2,
+        }]
+      },
+      options:{
+        plugins:{
+          legend:{labels:{color:"rgba(255,255,255,.78)"}},
+          tooltip:{callbacks:{label:(c)=>`${c.label}: ${money(c.raw)}`}}
+        }
+      }
+    });
+  }
+
+  // DAILY
+  destroyChart("daily");
+  {
+    const ctx = $("chDaily").getContext("2d");
+    const labels = res.days.map(x=>x.day);
+    const sdata = res.days.map(x=>clamp2(x.sales));
+    const pdata = res.days.map(x=>clamp2(x.profit));
+    CHARTS.daily = new Chart(ctx,{
+      type:"line",
+      data:{
+        labels,
+        datasets:[
+          {label:"Ventas", data:sdata, tension:.35, borderWidth:2},
+          {label:"Utilidad", data:pdata, tension:.35, borderWidth:2}
+        ]
+      },
+      options:{
+        plugins:{legend:{labels:{color:"rgba(255,255,255,.78)"}}},
+        scales:{ y:{ticks:{color:"rgba(255,255,255,.75)"}, grid:{color:"rgba(255,255,255,.08)"}}, x:{ticks:{color:"rgba(255,255,255,.75)"}, grid:{display:false}}}
+      }
+    });
+  }
+
+  // TOP products
+  destroyChart("top");
+  {
+    const ctx = $("chTop").getContext("2d");
+    const top = res.prods.slice(0,10);
+    CHARTS.top = new Chart(ctx,{
+      type:"bar",
+      data:{
+        labels: top.map(x=>x.name),
+        datasets:[{
+          label:"Utilidad",
+          data: top.map(x=>clamp2(x.profit)),
+          borderWidth:1,
+          borderRadius:12
+        }]
+      },
+      options:{
+        plugins:{legend:{labels:{color:"rgba(255,255,255,.78)"}}},
+        scales:{ y:{ticks:{color:"rgba(255,255,255,.75)"}, grid:{color:"rgba(255,255,255,.08)"}}, x:{ticks:{color:"rgba(255,255,255,.75)"}, grid:{display:false}}}
+      }
+    });
+  }
+}
+
+/* =====================
+   Tables
+===================== */
+function renderTables(res){
+  // Productos
+  {
+    const tb = $("tblProd").querySelector("tbody");
+    tb.innerHTML = "";
+    for(const p of res.prods){
+      const tr=document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(p.name)}</td>
+        <td class="right mono">${Number(p.qty||0)}</td>
+        <td class="right mono">${money(p.sales)}</td>
+        <td class="right mono">${money(p.cost)}</td>
+        <td class="right mono" style="color:${p.profit>=0?'var(--good)':'var(--bad)'}">${money(p.profit)}</td>
+        <td class="right mono">${Number(p.margin||0).toFixed(2)}%</td>
+      `;
+      tb.appendChild(tr);
+    }
+  }
+
+  // Clientes
+  {
+    const tb = $("tblCli").querySelector("tbody");
+    tb.innerHTML = "";
+    for(const c of res.clients){
+      const tr=document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(c.name||"")}</td>
+        <td class="mono">${escapeHtml(c.phone||"")}</td>
+        <td class="right mono">${money(c.sales)}</td>
+        <td class="right mono">${money(c.cost)}</td>
+        <td class="right mono" style="color:${c.profit>=0?'var(--good)':'var(--bad)'}">${money(c.profit)}</td>
+        <td class="right mono">${Number(c.tickets||0)}</td>
+      `;
+      tb.appendChild(tr);
+    }
+  }
+
+  // Detalle
+  {
+    const tb = $("tblDet").querySelector("tbody");
+    tb.innerHTML = "";
+    const rows = [...res.detail].sort((a,b)=>b.ts-a.ts);
+    for(const r of rows){
+      const tr=document.createElement("tr");
+      tr.innerHTML = `
+        <td class="mono">${escapeHtml(r.date)}</td>
+        <td><span class="pill ${r.type==='ENVIO'?'orange':'blue'}">${escapeHtml(r.type)}</span></td>
+        <td class="mono">${escapeHtml(r.pay)}</td>
+        <td>${escapeHtml(r.client)}${r.phone?` <span class="badge mono">${escapeHtml(r.phone)}</span>`:""}</td>
+        <td class="right mono">${money(r.subtotal)}</td>
+        <td class="right mono">${money(r.disc)}</td>
+        <td class="right mono">${money(r.total)}</td>
+        <td class="right mono">${money(r.cost)}</td>
+        <td class="right mono" style="color:${r.profit>=0?'var(--good)':'var(--bad)'}">${money(r.profit)}</td>
+      `;
+      tb.appendChild(tr);
+    }
+  }
+}
+
+function escapeHtml(s){
+  return String(s??"").replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));
+}
+
+/* =====================
+   Excel Export (4 hojas)
+===================== */
+function exportExcel(){
+  if(!LAST_RESULT){
+    alert("Primero carga un backup y aplica el filtro.");
+    return;
+  }
+  const res = LAST_RESULT;
+
+  const wb = XLSX.utils.book_new();
+
+  // Hoja 1: Estado de resultados (KPIs)
+  const k = res.kpis;
+  const ws1 = XLSX.utils.json_to_sheet([{
+    Ventas: clamp2(k.sales),
+    Costos: clamp2(k.costs),
+    Utilidad: clamp2(k.profit),
+    MargenPct: Number(k.margin||0).toFixed(2)+"%",
+    TicketPromedio: clamp2(k.avgTicket),
+    ROI: Number(k.roi||0).toFixed(2)+"%",
+    VentasCount: Number(k.n||0),
+    EnviosCount: Number(k.shipCount||0),
+    EnviosVentas: clamp2(k.shipMoney||0),
+  }]);
+  XLSX.utils.book_append_sheet(wb, ws1, "EstadoResultados");
+
+  // Hoja 2: Productos
+  const ws2 = XLSX.utils.json_to_sheet(res.prods.map(p=>({
+    Producto:p.name,
+    Unidades: p.qty,
+    Ventas: clamp2(p.sales),
+    Costos: clamp2(p.cost),
+    Utilidad: clamp2(p.profit),
+    MargenPct: Number(p.margin||0).toFixed(2)+"%"
+  })));
+  XLSX.utils.book_append_sheet(wb, ws2, "PorProducto");
+
+  // Hoja 3: Clientes
+  const ws3 = XLSX.utils.json_to_sheet(res.clients.map(c=>({
+    Cliente:c.name,
+    Telefono:c.phone,
+    Ventas: clamp2(c.sales),
+    Costos: clamp2(c.cost),
+    Utilidad: clamp2(c.profit),
+    Tickets:c.tickets
+  })));
+  XLSX.utils.book_append_sheet(wb, ws3, "PorCliente");
+
+  // Hoja 4: Detalle
+  const ws4 = XLSX.utils.json_to_sheet(res.detail.map(r=>({
+    Fecha:r.date,
+    Tipo:r.type,
+    Pago:r.pay,
+    Cliente:r.client,
+    Telefono:r.phone,
+    Subtotal: clamp2(r.subtotal),
+    Descuento: clamp2(r.disc),
+    Total: clamp2(r.total),
+    Costo: clamp2(r.cost),
+    Utilidad: clamp2(r.profit),
+    Recibo:r.receiptNo,
+    Origen:r.source
+  })));
+  XLSX.utils.book_append_sheet(wb, ws4, "DetalleVentas");
+
+  XLSX.writeFile(wb, "MODULO_FINANCIERO_MTR.xlsx");
+}
+</script>
+</body>
+</html>
